@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% block title %}BookShelf — Library{% endblock %}
+
+{% block content %}
+<div class="row g-0" style="height: calc(100vh - 80px);">
+
+  {# ── Left column: scrollable book list ─────────────────────────────── #}
+  <div class="col-4 border-end d-flex flex-column" id="book-list-col">
+
+    <div class="p-3 border-bottom bg-white d-flex align-items-center justify-content-between">
+      <span class="fw-semibold text-secondary small text-uppercase ls-1">
+        {% if search %}
+          Results for "{{ search }}"
+        {% else %}
+          All Books
+        {% endif %}
+        <span class="badge bg-primary ms-1">{{ books | length }}</span>
+      </span>
+      {% if search %}
+        <a href="{{ url_for('web.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill">
+          <i class="bi bi-x"></i> Clear
+        </a>
+      {% endif %}
+    </div>
+
+    <div class="overflow-y-auto flex-grow-1" id="book-list">
+      {% if books %}
+        {% for book in books %}
+          <div class="book-list-item px-3 py-3 border-bottom d-flex gap-3 align-items-start"
+               data-book-id="{{ book['id'] }}"
+               role="button"
+               onclick="loadDetail({{ book['id'] }})">
+
+            {# Thumbnail #}
+            {% if book['cover_url'] %}
+              <img src="{{ book['cover_url'] }}" alt="cover"
+                   class="rounded shadow-sm flex-shrink-0"
+                   style="width:42px;height:58px;object-fit:cover;" />
+            {% else %}
+              <div class="rounded bg-secondary-subtle d-flex align-items-center justify-content-center flex-shrink-0"
+                   style="width:42px;height:58px;">
+                <i class="bi bi-book text-secondary"></i>
+              </div>
+            {% endif %}
+
+            <div class="overflow-hidden">
+              <div class="fw-semibold text-truncate lh-sm">{{ book['title'] }}</div>
+              <div class="text-muted small text-truncate">{{ book['author'] or '—' }}</div>
+              {% if book['year'] %}
+                <span class="badge bg-secondary-subtle text-secondary mt-1" style="font-size:.7rem;">
+                  {{ book['year'] }}
+                </span>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-journal-x fs-1 d-block mb-2"></i>
+          No books found.<br>
+          <a href="{{ url_for('web.fetch') }}" class="btn btn-sm btn-success mt-3 rounded-pill">
+            <i class="bi bi-cloud-download me-1"></i>Fetch from Open Library
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>{# /col-4 #}
+
+  {# ── Right column: detail panel ─────────────────────────────────────── #}
+  <div class="col-8 overflow-y-auto" id="detail-panel">
+
+    {# Default welcome state #}
+    <div id="detail-welcome" class="h-100 d-flex flex-column align-items-center justify-content-center text-center text-muted p-5">
+      <i class="bi bi-hand-index-thumb fs-1 mb-3 text-primary"></i>
+      <h5 class="fw-semibold">Select a book</h5>
+      <p class="small">Click any title on the left to view its details here.</p>
+    </div>
+
+    {# Detail content injected by JS #}
+    <div id="detail-content" class="p-4 d-none">
+
+      <div class="d-flex gap-4 mb-4" id="detail-header"></div>
+
+      {# Edit form #}
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-2">
+          <span class="fw-semibold small text-uppercase text-secondary">Edit Details</span>
+          <button class="btn btn-sm btn-outline-secondary rounded-pill"
+                  type="button" data-bs-toggle="collapse"
+                  data-bs-target="#editFormCollapse">
+            <i class="bi bi-pencil me-1"></i>Edit
+          </button>
+        </div>
+        <div class="collapse" id="editFormCollapse">
+          <div class="card-body">
+            <form id="edit-form" method="POST">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label small fw-semibold">Title <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control form-control-sm" name="title" id="ef-title" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Author</label>
+                  <input type="text" class="form-control form-control-sm" name="author" id="ef-author" />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small fw-semibold">Year</label>
+                  <input type="number" class="form-control form-control-sm" name="year" id="ef-year" />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small fw-semibold">Pages</label>
+                  <input type="number" class="form-control form-control-sm" name="page_count" id="ef-pages" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Subject</label>
+                  <input type="text" class="form-control form-control-sm" name="subject" id="ef-subject" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">ISBN</label>
+                  <input type="text" class="form-control form-control-sm" name="isbn" id="ef-isbn" />
+                </div>
+                <div class="col-12">
+                  <label class="form-label small fw-semibold">Cover URL</label>
+                  <input type="url" class="form-control form-control-sm" name="cover_url" id="ef-cover" />
+                </div>
+              </div>
+              <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4">
+                  <i class="bi bi-check2 me-1"></i>Save Changes
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill"
+                        data-bs-toggle="collapse" data-bs-target="#editFormCollapse">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {# Delete #}
+      <form id="delete-form" method="POST" class="mt-3"
+            onsubmit="return confirm('Delete this book? This cannot be undone.')">
+        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+          <i class="bi bi-trash3 me-1"></i>Delete Book
+        </button>
+      </form>
+
+    </div>{# /detail-content #}
+
+    {# Loading spinner #}
+    <div id="detail-loading" class="h-100 d-flex align-items-center justify-content-center d-none">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading…</span>
+      </div>
+    </div>
+
+    {# Error state #}
+    <div id="detail-error" class="p-4 d-none">
+      <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span id="detail-error-msg">Could not load book details.</span>
+      </div>
+    </div>
+
+  </div>{# /col-8 #}
+
+</div>{# /row #}
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+  // Always compare IDs as integers
+  let activeId = null;
+
+  function setActiveItem(bookId) {
+    document.querySelectorAll(".book-list-item").forEach(el => {
+      el.classList.toggle("active", parseInt(el.dataset.bookId) === bookId);
+    });
+  }
+
+  function showState(state) {
+    ["welcome", "loading", "content", "error"].forEach(s => {
+      document.getElementById("detail-" + s)
+              .classList.toggle("d-none", s !== state);
+    });
+  }
+
+  function renderHeader(book) {
+    const cover = book.cover_url
+      ? `<img src="${book.cover_url}" alt="cover"
+              class="rounded shadow flex-shrink-0"
+              style="width:100px;height:140px;object-fit:cover;"
+              onerror="this.style.display='none'" />`
+      : `<div class="rounded bg-secondary-subtle d-flex align-items-center
+              justify-content-center flex-shrink-0"
+              style="width:100px;height:140px;">
+           <i class="bi bi-book fs-1 text-secondary"></i>
+         </div>`;
+
+    const year  = book.year        ? `<span class="badge bg-primary-subtle text-primary">${book.year}</span>` : "";
+    const pages = book.page_count  ? `<span class="badge bg-secondary-subtle text-secondary">${book.page_count} pages</span>` : "";
+    const subj  = book.subject     ? `<span class="badge bg-info-subtle text-info">${book.subject}</span>` : "";
+    const isbn  = book.isbn        ? `<small class="text-muted d-block mt-1"><i class="bi bi-upc me-1"></i>${book.isbn}</small>` : "";
+
+    document.getElementById("detail-header").innerHTML = `
+      ${cover}
+      <div class="flex-grow-1 min-w-0">
+        <h4 class="fw-bold mb-1">${book.title}</h4>
+        <p class="text-muted mb-2">${book.author || "<em>Unknown author</em>"}</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">${year}${pages}${subj}</div>
+        ${isbn}
+      </div>`;
+  }
+
+  function populateForm(book) {
+    document.getElementById("ef-title").value   = book.title      || "";
+    document.getElementById("ef-author").value  = book.author     || "";
+    document.getElementById("ef-year").value    = book.year       || "";
+    document.getElementById("ef-pages").value   = book.page_count || "";
+    document.getElementById("ef-subject").value = book.subject    || "";
+    document.getElementById("ef-isbn").value    = book.isbn       || "";
+    document.getElementById("ef-cover").value   = book.cover_url  || "";
+
+    document.getElementById("edit-form").action   = `/books/${book.id}/edit`;
+    document.getElementById("delete-form").action = `/books/${book.id}/delete`;
+  }
+
+  async function loadDetail(bookId) {
+    // Cast to int so repeated clicks on the same item are detected correctly
+    bookId = parseInt(bookId);
+    if (bookId === activeId) return;
+    activeId = bookId;
+    setActiveItem(bookId);
+    showState("loading");
+
+    // Collapse any open edit form (guard in case Bootstrap didn't load)
+    try {
+      const collapseEl = document.getElementById("editFormCollapse");
+      const bsCollapse = bootstrap.Collapse.getInstance(collapseEl);
+      if (bsCollapse) bsCollapse.hide();
+    } catch(e) { /* Bootstrap not ready yet */ }
+
+    try {
+      // Use trailing slash to match Flask-RESTX route exactly
+      const res  = await fetch(`/api/books/${bookId}`);
+      const json = await res.json();
+
+      if (!res.ok) {
+        document.getElementById("detail-error-msg").textContent =
+          json.message || "Book not found.";
+        showState("error");
+        return;
+      }
+
+      renderHeader(json.data);
+      populateForm(json.data);
+      showState("content");
+
+    } catch (err) {
+      console.error("loadDetail error:", err);
+      document.getElementById("detail-error-msg").textContent =
+        "Network error — could not reach the server. Check the console.";
+      showState("error");
+    }
+  }
+</script>
+{% endblock %}

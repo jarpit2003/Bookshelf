@@ -1,0 +1,68 @@
+/* ── Navbar ──────────────────────────────────────────────────────────── */
+#main-nav {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%) !important;
+  min-height: 58px;
+}
+
+/* ── Full-height layout ──────────────────────────────────────────────── */
+html, body {
+  height: 100%;
+  background-color: #f4f6fb;
+}
+
+/* ── Book list panel ─────────────────────────────────────────────────── */
+#book-list-col {
+  background: #fff;
+}
+
+.book-list-item {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  user-select: none;
+}
+
+.book-list-item:hover {
+  background-color: #f0f4ff;
+}
+
+.book-list-item.active {
+  background-color: #e8eeff;
+  border-left: 3px solid #4361ee !important;
+}
+
+/* ── Detail panel ────────────────────────────────────────────────────── */
+#detail-panel {
+  background-color: #f8f9fc;
+}
+
+/* ── Scrollbar (Webkit) ──────────────────────────────────────────────── */
+#book-list::-webkit-scrollbar,
+#detail-panel::-webkit-scrollbar {
+  width: 5px;
+}
+
+#book-list::-webkit-scrollbar-track,
+#detail-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#book-list::-webkit-scrollbar-thumb,
+#detail-panel::-webkit-scrollbar-thumb {
+  background-color: #ced4da;
+  border-radius: 10px;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────── */
+.card {
+  border-radius: 12px;
+}
+
+/* ── Badges ──────────────────────────────────────────────────────────── */
+.badge {
+  font-weight: 500;
+}
+
+/* ── Letter-spacing utility ──────────────────────────────────────────── */
+.ls-1 {
+  letter-spacing: 0.04em;
+}
